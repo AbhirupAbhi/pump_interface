@@ -1,4 +1,8 @@
+#[cfg(feature = "serde")]
+// use crate::serializer::{deserialize_u128_as_string, serialize_u128_as_string};
+use crate::*;
 use borsh::{BorshDeserialize, BorshSerialize};
+use inflector::Inflector;
 use solana_program::{
     account_info::AccountInfo, entrypoint::ProgramResult,
     instruction::{AccountMeta, Instruction},
@@ -6,7 +10,13 @@ use solana_program::{
     pubkey::Pubkey, program_error::ProgramError,
 };
 use std::io::Read;
-#[derive(Clone, Debug, PartialEq)]
+// use std::fmt;
+use strum_macros::{Display, EnumString};
+
+
+
+#[derive(Clone, Debug, PartialEq, EnumString, Display)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum PumpProgramIx {
     Initialize,
     SetParams(SetParamsIxArgs),
@@ -15,7 +25,12 @@ pub enum PumpProgramIx {
     Sell(SellIxArgs),
     Withdraw,
 }
+
 impl PumpProgramIx {
+    pub fn name(&self) -> String {
+        // Use the ToString derived method to get the enum variant name
+        self.to_string().to_camel_case()
+    }
     pub fn deserialize(buf: &[u8]) -> std::io::Result<Self> {
         let mut reader = buf;
         let mut maybe_discm = [0u8; 8];
@@ -357,7 +372,7 @@ for SetParamsAccounts<'me, 'info> {
     }
 }
 pub const SET_PARAMS_IX_DISCM: [u8; 8] = [27, 234, 178, 52, 147, 2, 187, 141];
-#[derive(BorshDeserialize, BorshSerialize, Clone, Debug, PartialEq)]
+#[derive(BorshDeserialize, BorshSerialize, Clone, Debug, PartialEq,Default)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct SetParamsIxArgs {
     pub fee_recipient: Pubkey,
@@ -691,7 +706,7 @@ for CreateAccounts<'me, 'info> {
     }
 }
 pub const CREATE_IX_DISCM: [u8; 8] = [24, 30, 200, 40, 5, 28, 7, 119];
-#[derive(BorshDeserialize, BorshSerialize, Clone, Debug, PartialEq)]
+#[derive(BorshDeserialize, BorshSerialize, Clone, Debug, PartialEq, Default)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct CreateIxArgs {
     pub name: String,
@@ -1011,7 +1026,7 @@ for BuyAccounts<'me, 'info> {
     }
 }
 pub const BUY_IX_DISCM: [u8; 8] = [102, 6, 61, 18, 1, 218, 235, 234];
-#[derive(BorshDeserialize, BorshSerialize, Clone, Debug, PartialEq)]
+#[derive(BorshDeserialize, BorshSerialize, Clone, Debug, PartialEq, Default)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct BuyIxArgs {
     pub amount: u64,
@@ -1326,7 +1341,7 @@ for SellAccounts<'me, 'info> {
     }
 }
 pub const SELL_IX_DISCM: [u8; 8] = [51, 230, 133, 164, 1, 127, 131, 173];
-#[derive(BorshDeserialize, BorshSerialize, Clone, Debug, PartialEq)]
+#[derive(BorshDeserialize, BorshSerialize, Clone, Debug, PartialEq, Default)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct SellIxArgs {
     pub amount: u64,
